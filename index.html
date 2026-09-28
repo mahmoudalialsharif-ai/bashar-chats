@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>الكابتن — Bashar Assistant</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{--cyan:#00d4ff;--dark:#0a0a15;--card:#12121f;--border:#2a2a44;--text:#fff;--muted:#8888a0}
+body{font-family:'Cairo',sans-serif;background:var(--dark);color:var(--text);height:100vh;display:flex;flex-direction:column;overflow:hidden;position:relative}
+body::before{content:'';position:fixed;top:-50%;right:-20%;width:500px;height:500px;background:radial-gradient(circle,rgba(0,212,255,.08),transparent 70%);border-radius:50%;z-index:0;pointer-events:none}
+.header{background:linear-gradient(90deg,#12121f,#0a0a15);border-bottom:2px solid var(--cyan);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;z-index:10;position:relative}
+.logo{display:flex;align-items:center;gap:10px}
+.logo-icon{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,var(--cyan),#0080aa);display:flex;align-items:center;justify-content:center;font-size:22px;position:relative;box-shadow:0 0 20px rgba(0,212,255,.4)}
+.logo-icon::after{content:'';position:absolute;bottom:0;left:0;width:12px;height:12px;background:#22c55e;border:2px solid var(--dark);border-radius:50%}
+.logo-text{font-weight:900;font-size:18px;color:var(--cyan)}
+.logo-sub{font-size:11px;color:#22c55e}
+.tabs{display:flex;background:#0d0d1a;border-bottom:1px solid var(--border);z-index:10;position:relative}
+.tab{flex:1;padding:12px 8px;text-align:center;font-weight:700;font-size:14px;cursor:pointer;transition:.2s;border:none;background:transparent;color:var(--muted);font-family:inherit}
+.tab.active{background:var(--cyan);color:#000}
+.view{flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative;z-index:5}
+.hidden{display:none}
+#chat-messages{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px}
+#chat-messages::-webkit-scrollbar{width:5px}
+#chat-messages::-webkit-scrollbar-thumb{background:var(--border);border-radius:10px}
+.msg{display:flex;gap:8px;max-width:85%;animation:fadeIn .3s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.msg.user{align-self:flex-start;flex-direction:row-reverse;margin-right:auto;margin-left:0}
+.msg.ai{align-self:flex-end;margin-left:auto;margin-right:0}
+.avatar{width:32px;height:32px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:16px;margin-top:4px}
+.msg.ai .avatar{background:linear-gradient(135deg,var(--cyan),#0080aa)}
+.msg.user .avatar{background:rgba(255,255,255,.1)}
+.bubble{padding:12px 16px;border-radius:18px;line-height:1.6;font-size:14px;white-space:pre-wrap;word-break:break-word;position:relative}
+.msg.user .bubble{background:linear-gradient(135deg,var(--cyan),#0099cc);color:#000;border-bottom-right-radius:4px;font-weight:500}
+.msg.ai .bubble{background:var(--card);border:1px solid var(--border);color:var(--text);border-bottom-left-radius:4px}
+.msg-meta{font-size:10px;color:var(--muted);margin-top:4px;opacity:0;transition:.2s;display:flex;gap:8px;align-items:center}
+.msg:hover .msg-meta{opacity:1}
+.msg.user .msg-meta{justify-content:flex-start}
+.msg.ai .msg-meta{justify-content:flex-end}
+.copy-btn{background:none;border:none;color:var(--muted);cursor:pointer;padding:2px 4px;font-size:10px;font-family:inherit;transition:.2s}
+.copy-btn:hover{color:var(--cyan)}
+.typing{display:flex;gap:4px;padding:14px 18px;background:var(--card);border:1px solid var(--border);border-radius:18px;border-bottom-left-radius:4px;width:fit-content;margin-left:auto}
+.typing span{width:8px;height:8px;border-radius:50%;background:var(--cyan);animation:bounce 1.4s infinite}
+.typing span:nth-child(2){animation-delay:.2s}
+.typing span:nth-child(3){animation-delay:.4s}
+@keyframes bounce{0%,60%,100%{transform:translateY(0);opacity:.4}30%{transform:translateY(-8px);opacity:1}}
+.suggestions{padding:8px 12px;border-top:1px solid var(--border);background:#0d0d1a}
+.suggestions-label{font-size:11px;color:var(--muted);margin-bottom:6px;display:flex;align-items:center;gap:4px}
+.suggestions-list{display:flex;flex-wrap:wrap;gap:6px}
+.suggestion{background:rgba(255,255,255,.05);border:1px solid var(--border);color:var(--text);padding:6px 12px;border-radius:20px;font-size:12px;cursor:pointer;transition:.2s;font-family:inherit}
+.suggestion:hover{border-color:var(--cyan);background:rgba(0,212,255,.1)}
+.input-area{padding:10px 12px;background:#0d0d1a;border-top:1px solid var(--border);display:flex;gap:8px;align-items:center}
+.icon-btn{width:44px;height:44px;border-radius:12px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:.2s}
+.icon-btn:hover{border-color:var(--cyan);color:var(--cyan)}
+.icon-btn.recording{border-color:#ef4444;color:#ef4444;background:rgba(239,68,68,.1);animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.6}}
+#msg-input{flex:1;background:var(--card);border:1px solid var(--border);color:var(--text);padding:12px 16px;border-radius:12px;font-size:14px;outline:none;font-family:inherit;transition:.2s}
+#msg-input:focus{border-color:var(--cyan)}
+#msg-input::placeholder{color:var(--muted)}
+.send-btn{width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,var(--cyan),#0099cc);border:none;color:#000;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:.2s}
+.send-btn:hover{opacity:.85}
+.send-btn:disabled{opacity:.4;cursor:not-allowed}
+.send-btn.loading{animation:pulse 1.5s infinite}
+.projects-view,.settings-view{padding:16px;overflow-y:auto;flex:1}
+.project-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:12px;transition:.2s;cursor:pointer}
+.project-card:hover{border-color:var(--cyan)}
+.project-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.project-badge{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700}
+.badge-pending{background:rgba(234,179,8,.2);color:#eab308}
+.badge-approved{background:rgba(34,197,94,.2);color:#22c55e}
+.badge-executed{background:rgba(0,212,255,.2);color:var(--cyan)}
+.project-name{font-weight:700;font-size:14px;margin-bottom:4px}
+.project-id{font-size:11px;color:var(--muted);font-family:monospace;direction:ltr}
+.current-project{background:linear-gradient(135deg,rgba(0,212,255,.1),rgba(0,212,255,.02));border:1px solid rgba(0,212,255,.3);border-radius:16px;padding:16px;margin-bottom:16px}
+.current-project h3{color:var(--cyan);font-size:14px;margin-bottom:6px;display:flex;align-items:center;gap:6px}
+.current-project .pid{font-family:monospace;font-size:12px;color:var(--muted);direction:ltr;background:rgba(0,0,0,.3);padding:4px 8px;border-radius:8px;display:inline-block}
+.settings-section{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px;margin-bottom:16px}
+.settings-section h3{color:var(--cyan);margin-bottom:14px;font-size:15px}
+.settings-label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}
+.settings-input{width:100%;background:var(--dark);border:1px solid var(--border);color:var(--text);padding:12px 14px;border-radius:12px;font-size:14px;outline:none;font-family:inherit;margin-bottom:12px;transition:.2s}
+.settings-input:focus{border-color:var(--cyan)}
+.btn-primary{background:var(--cyan);color:#000;border:none;padding:10px 20px;border-radius:12px;font-weight:700;font-size:14px;cursor:pointer;font-family:inherit;transition:.2s}
+.btn-primary:hover{opacity:.85}
+.btn-danger{background:rgba(239,68,68,.2);color:#ef4444;border:1px solid rgba(239,68,68,.3);padding:10px 20px;border-radius:12px;font-weight:700;font-size:14px;cursor:pointer;font-family:inherit;transition:.2s}
+.btn-danger:hover{background:rgba(239,68,68,.3)}
+.empty-state{text-align:center;padding:40px 20px;color:var(--muted);font-size:14px}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">
+    <div class="logo-icon">🤖</div>
+    <div>
+      <div class="logo-text">الكابتن</div>
+      <div class="logo-sub" id="status">● متصل الآن</div>
+    </div>
+  </div>
+</div>
+
+<div class="tabs">
+  <button class="tab active" onclick="switchTab('chat')">💬 شات</button>
+  <button class="tab" onclick="switchTab('projects')">📁 مشاريعي</button>
+  <button class="tab" onclick="switchTab('settings')">⚙️ إعدادات</button>
+</div>
+
+<!-- Chat View -->
+<div class="view" id="view-chat">
+  <div id="chat-messages"></div>
+  <div class="suggestions" id="suggestions">
+    <div class="suggestions-label">✨ اقتراحات سريعة:</div>
+    <div class="suggestions-list">
+      <button class="suggestion" onclick="quickSend('اكتبلي مقال احترافي عن الذكاء الاصطناعي')">📝 اكتب مقال</button>
+      <button class="suggestion" onclick="quickSend('حلل بيانات مبيعات شهرية')">📊 حلل بيانات</button>
+      <button class="suggestion" onclick="quickSend('اكتبلي سكريبت Python لتنظيم الملفات')">💻 كود Python</button>
+      <button class="suggestion" onclick="quickSend('ترجم الإيميل ده للعربي')">🌐 ترجمة</button>
+    </div>
+  </div>
+  <div class="input-area">
+    <button class="icon-btn" onclick="document.getElementById('file-input').click()" title="ملف">📎</button>
+    <input type="file" id="file-input" hidden onchange="handleFile(this)">
+    <button class="icon-btn" id="voice-btn" onclick="toggleVoice()" title="صوت">🎤</button>
+    <input id="msg-input" placeholder="اكتب رسالتك..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();send()}">
+    <button class="send-btn" id="send-btn" onclick="send()" title="إرسال">➤</button>
+  </div>
+</div>
+
+<!-- Projects View -->
+<div class="view hidden" id="view-projects">
+  <div class="projects-view">
+    <div class="current-project">
+      <h3>📌 المشروع الحالي</h3>
+      <div class="pid" id="current-pid">default</div>
+    </div>
+    <div id="projects-list"></div>
+  </div>
+</div>
+
+<!-- Settings View -->
+<div class="view hidden" id="view-settings">
+  <div class="settings-view">
+    <div class="settings-section">
+      <h3>⚙️ الإعدادات</h3>
+      <label class="settings-label">اسمك</label>
+      <input class="settings-input" id="set-name" placeholder="اكتب اسمك...">
+      <label class="settings-label">Project ID الحالي</label>
+      <input class="settings-input" id="set-pid" placeholder="default">
+      <button class="btn-primary" onclick="saveSettings()">حفظ</button>
+    </div>
+    <div class="settings-section">
+      <h3>🗑️ المحادثة</h3>
+      <button class="btn-danger" onclick="clearChat()">مسح كل الرسائل</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const API_URL = 'https://mahmoudalialsharif.n8n-host.com/webhook/chat';
+const PROJECTS_URL = 'https://mahmoudalialsharif.n8n-host.com/webhook/projects-list';
+
+let currentPid = localStorage.getItem('kaptan_pid') || 'default';
+let userName = localStorage.getItem('kaptan_name') || '';
+let history = JSON.parse(localStorage.getItem('kaptan_history') || '[]');
+let isRecording = false;
+let recognition = null;
+
+document.getElementById('current-pid').textContent = currentPid;
+document.getElementById('set-pid').value = currentPid;
+document.getElementById('set-name').value = userName;
+
+// Load chat
+function loadChat() {
+  const container = document.getElementById('chat-messages');
+  if (history.length === 0) {
+    addMessage('ai', '👋 أهلاً! أنا الكابتن، جاهز أنفذ مشروعك. اكتب طلبك أو اختار خدمة من الاقتراحات.', false);
+    return;
+  }
+  history.forEach(h => addMessage(h.role, h.text, false));
+}
+
+function addMessage(role, text, save = true) {
+  const container = document.getElementById('chat-messages');
+  const div = document.createElement('div');
+  div.className = 'msg ' + (role === 'user' ? 'user' : 'ai');
+  const avatar = role === 'user' ? '👤' : '🤖';
+  const time = new Date().toLocaleTimeString('ar-EG', {hour:'2-digit', minute:'2-digit'});
+  const copyBtn = role === 'ai' ? `<button class="copy-btn" onclick="copyText(this,'${btoa(unescape(encodeURIComponent(text))).slice(0,50)}')">📋 نسخ</button>` : '';
+  div.innerHTML = `
+    <div class="avatar">${avatar}</div>
+    <div>
+      <div class="bubble">${escapeHtml(text)}</div>
+      <div class="msg-meta"><span>${time}</span>${copyBtn}</div>
+    </div>
+  `;
+  div.dataset.text = text;
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
+  if (save) {
+    history.push({role, text, time: Date.now()});
+    if (history.length > 100) history = history.slice(-100);
+    localStorage.setItem('kaptan_history', JSON.stringify(history));
+  }
+}
+
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+function copyText(btn, encoded) {
+  const msgDiv = btn.closest('.msg');
+  const text = msgDiv.dataset.text;
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = '✅ تم';
+    setTimeout(() => btn.textContent = '📋 نسخ', 1500);
+  });
+}
+
+function showTyping() {
+  const container = document.getElementById('chat-messages');
+  const div = document.createElement('div');
+  div.className = 'msg ai';
+  div.id = 'typing-indicator';
+  div.innerHTML = `
+    <div class="avatar">🤖</div>
+    <div class="typing"><span></span><span></span><span></span></div>
+  `;
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
+}
+
+function hideTyping() {
+  const t = document.getElementById('typing-indicator');
+  if (t) t.remove();
+}
+
+async function send() {
+  const input = document.getElementById('msg-input');
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = '';
+  await processMessage(text);
+}
+
+async function quickSend(text) {
+  await processMessage(text);
+}
+
+async function processMessage(text) {
+  document.getElementById('suggestions').style.display = 'none';
+  addMessage('user', text);
+  document.getElementById('status').textContent = '● يفكر...';
+  document.getElementById('status').style.color = '#eab308';
+  document.getElementById('send-btn').classList.add('loading');
+  showTyping();
+
+  try {
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({project_id: currentPid, message: text})
+    });
+    const data = await res.json();
+    hideTyping();
+    let reply = 'تم التنفيذ';
+    if (Array.isArray(data) && data[0]) {
+      reply = data[0].output || data[0].reply || data[0].text || reply;
+    } else if (data && typeof data === 'object') {
+      reply = data.output || data.reply || data.text || reply;
+    }
+    addMessage('ai', reply);
+    document.getElementById('status').textContent = '● متصل الآن';
+    document.getElementById('status').style.color = '#22c55e';
+  } catch (e) {
+    hideTyping();
+    addMessage('ai', '❌ فشل الاتصال، حاول تاني');
+    document.getElementById('status').textContent = '● خطأ';
+    document.getElementById('status').style.color = '#ef4444';
+  }
+  document.getElementById('send-btn').classList.remove('loading');
+}
+
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
+  event.target.classList.add('active');
+  document.getElementById('view-' + tab).classList.remove('hidden');
+  if (tab === 'projects') loadProjects();
+}
+
+async function loadProjects() {
+  const list = document.getElementById('projects-list');
+  list.innerHTML = '<div class="empty-state">⏳ جاري التحميل...</div>';
+  try {
+    const res = await fetch(PROJECTS_URL);
+    const data = await res.json();
+    const projects = Array.isArray(data) ? data : [];
+    const approved = projects.filter(p => (p.status || '').toLowerCase() === 'approved');
+    if (approved.length === 0) {
+      list.innerHTML = '<div class="empty-state">مفيش مشاريع معتمدة لسه</div>';
+      return;
+    }
+    list.innerHTML = approved.reverse().map(p => `
+      <div class="project-card" onclick="openProject('${p.project_id}')">
+        <div class="project-header">
+          <span class="project-badge badge-${(p.status||'').toLowerCase()}">${p.status || 'pending'}</span>
+          <span style="font-size:11px;color:var(--muted)">${p.created_at ? new Date(p.created_at).toLocaleDateString('ar-EG') : ''}</span>
+        </div>
+        <div class="project-name">${p.client_name || 'عميل'}</div>
+        <div class="project-id">${p.project_id}</div>
+      </div>
+    `).join('');
+  } catch (e) {
+    list.innerHTML = '<div class="empty-state">❌ فشل التحميل</div>';
+  }
+}
+
+function openProject(pid) {
+  currentPid = pid;
+  localStorage.setItem('kaptan_pid', pid);
+  document.getElementById('current-pid').textContent = pid;
+  document.getElementById('set-pid').value = pid;
+  switchTab('chat');
+}
+
+function saveSettings() {
+  userName = document.getElementById('set-name').value.trim();
+  currentPid = document.getElementById('set-pid').value.trim() || 'default';
+  localStorage.setItem('kaptan_name', userName);
+  localStorage.setItem('kaptan_pid', currentPid);
+  document.getElementById('current-pid').textContent = currentPid;
+  alert('✅ تم الحفظ');
+}
+
+function clearChat() {
+  if (!confirm('متأكد؟')) return;
+  history = [];
+  localStorage.removeItem('kaptan_history');
+  document.getElementById('chat-messages').innerHTML = '';
+  addMessage('ai', '👋 أهلاً! أنا الكابتن، جاهز أنفذ مشروعك.', false);
+}
+
+function handleFile(input) {
+  const f = input.files[0];
+  if (f) processMessage(`[ملف مرفق: ${f.name}]`);
+}
+
+function toggleVoice() {
+  const btn = document.getElementById('voice-btn');
+  if (isRecording) {
+    if (recognition) recognition.stop();
+    isRecording = false;
+    btn.classList.remove('recording');
+    return;
+  }
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) { alert('المتصفح مش بيدعم الصوت، جرب Chrome'); return; }
+  recognition = new SR();
+  recognition.lang = 'ar-EG';
+  recognition.continuous = false;
+  recognition.interimResults = false;
+  recognition.onresult = (e) => {
+    const t = e.results[0][0].transcript;
+    document.getElementById('msg-input').value = t;
+  };
+  recognition.onerror = () => { isRecording = false; btn.classList.remove('recording'); };
+  recognition.onend = () => { isRecording = false; btn.classList.remove('recording'); };
+  recognition.start();
+  isRecording = true;
+  btn.classList.add('recording');
+}
+
+loadChat();
+</script>
+</body>
+  </html>
