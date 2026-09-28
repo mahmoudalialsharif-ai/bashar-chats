@@ -105,7 +105,6 @@ body::before{content:'';position:fixed;top:-50%;right:-20%;width:500px;height:50
   <button class="tab" onclick="switchTab('settings')">⚙️ إعدادات</button>
 </div>
 
-<!-- Chat View -->
 <div class="view" id="view-chat">
   <div id="chat-messages"></div>
   <div class="suggestions" id="suggestions">
@@ -126,7 +125,6 @@ body::before{content:'';position:fixed;top:-50%;right:-20%;width:500px;height:50
   </div>
 </div>
 
-<!-- Projects View -->
 <div class="view hidden" id="view-projects">
   <div class="projects-view">
     <div class="current-project">
@@ -137,7 +135,6 @@ body::before{content:'';position:fixed;top:-50%;right:-20%;width:500px;height:50
   </div>
 </div>
 
-<!-- Settings View -->
 <div class="view hidden" id="view-settings">
   <div class="settings-view">
     <div class="settings-section">
@@ -156,7 +153,7 @@ body::before{content:'';position:fixed;top:-50%;right:-20%;width:500px;height:50
 </div>
 
 <script>
-const API_URL = 'https://mahmoudalialsharif.n8n-host.com/webhook/chat';
+const API_URL = 'https://bashar-chats.vercel.app/api/chat';
 const PROJECTS_URL = 'https://mahmoudalialsharif.n8n-host.com/webhook/projects-list';
 
 let currentPid = localStorage.getItem('kaptan_pid') || 'default';
@@ -169,9 +166,7 @@ document.getElementById('current-pid').textContent = currentPid;
 document.getElementById('set-pid').value = currentPid;
 document.getElementById('set-name').value = userName;
 
-// Load chat
 function loadChat() {
-  const container = document.getElementById('chat-messages');
   if (history.length === 0) {
     addMessage('ai', '👋 أهلاً! أنا الكابتن، جاهز أنفذ مشروعك. اكتب طلبك أو اختار خدمة من الاقتراحات.', false);
     return;
@@ -185,7 +180,7 @@ function addMessage(role, text, save = true) {
   div.className = 'msg ' + (role === 'user' ? 'user' : 'ai');
   const avatar = role === 'user' ? '👤' : '🤖';
   const time = new Date().toLocaleTimeString('ar-EG', {hour:'2-digit', minute:'2-digit'});
-  const copyBtn = role === 'ai' ? `<button class="copy-btn" onclick="copyText(this,'${btoa(unescape(encodeURIComponent(text))).slice(0,50)}')">📋 نسخ</button>` : '';
+  const copyBtn = role === 'ai' ? `<button class="copy-btn" onclick="copyText(this)">📋 نسخ</button>` : '';
   div.innerHTML = `
     <div class="avatar">${avatar}</div>
     <div>
@@ -209,7 +204,7 @@ function escapeHtml(text) {
   return div.innerHTML;
 }
 
-function copyText(btn, encoded) {
+function copyText(btn) {
   const msgDiv = btn.closest('.msg');
   const text = msgDiv.dataset.text;
   navigator.clipboard.writeText(text).then(() => {
@@ -375,4 +370,4 @@ function toggleVoice() {
 loadChat();
 </script>
 </body>
-  </html>
+</html>
